@@ -1,0 +1,51 @@
+---
+title: "viz-forest"
+author: "Nathan Korinek"
+date: "2023-06-06"
+output: html_document
+---
+
+```{r}
+library(terra)
+setwd("/home/nathan/GitHub/visualize-forest-disturbance")
+data <- rast("masked-forest-disturbance-stack_western-conus.tiff")
+data_test <- rast("clipped-stack.tiff")
+
+```
+```{r}
+reclass_write_raster <- function(arr, reclass_matrix, matrix_columns, indices, raster_name, write=TRUE){
+    rclmat <- matrix(reclass_matrix, ncol=matrix_columns, byrow=TRUE)
+    rc <- classify(arr, rclmat)
+    sum_raster <- sum(rc)
+    if (write){
+      writeRaster(sum_raster, filename=raster_name, overwrite=TRUE, datatype='INT1U',
+                  NAflag=255)
+    }
+    return(sum_raster)
+}
+```
+```{r}
+fire_m <- c(0, 0, 1, 1, 2, 0, 3, 0, 4, 0, 5, 1, 6, 0, 7, 0, 8, 0, 9, 1, 10, 0, 11, 0, 12, 0, 13, 1, 14, 0, 15, 0)
+indices <- rep(1, 22)
+fire_sum <- reclass_write_raster(data, fire_m, 2, indices, "fire_stack.tif")
+```
+
+
+```{r}
+beetle_m <- c(0, 0, 1, 0, 2, 1, 3, 0, 4, 0, 5, 0, 6, 1, 7, 0, 8, 0, 9, 0, 10, 1, 11, 0, 12, 0, 13, 0, 14, 1, 15, 0)
+beetle_sum <- reclass_write_raster(data, beetle_m, 2, indices, "beetle_stack.tif")
+```
+```{r}
+drought_m <- c(0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 1, 13, 1, 14, 1, 15, 1)
+drought_sum <- reclass_write_raster(data, drought_m, 2, indices, "drought_stack.tif")
+```
+```{r}
+fire_sum_rast <- rast("fire_stack.tif")
+
+fire_sum_over_1 = c(0, 1, 0, 1, 16, 1, 17, 255, 255)
+fso1_rclmat <- matrix(fire_sum_over_1, ncol=3, byrow=TRUE)
+fso1_rc <- classify(fire_sum_rast, fso1_rclmat)
+writeRaster(fso1_rc, filename="fire_sum_over_1.tif", overwrite=TRUE, datatype='INT1U',
+            NAflag=255)
+```
+
